@@ -1,6 +1,7 @@
 import pandas as pd
 import random
 
+
 from nltk.corpus import stopwords
 from nltk import *
 
@@ -23,14 +24,14 @@ def preprocessing(filename):
     # Find the stem of words in text
 
     df_rev = df_rr.iloc[:, 0]  # only reviews
-    rand_review = df_rev.loc[random.randint(0, length)]
+    raw_review = df_rev.loc[random.randint(0, length)]
 
-    print("Review text: ", rand_review)
+    print("Review text: ", raw_review)
     print("---------------------------")
 
     tokenizer = RegexpTokenizer(r'\w+')  # remove punctuation with regex
     ps = PorterStemmer()
-    rand_review = tokenizer.tokenize(rand_review)
+    rand_review = tokenizer.tokenize(raw_review)
     stems = [ps.stem(word) for word in rand_review]
     print("Stems list: ", stems)
     print("---------------------------")
@@ -41,7 +42,7 @@ def preprocessing(filename):
     print("Stopwords eliminated: ", eliminated)
     print("---------------------------")
 
-    return eliminated
+    return eliminated, rand_review
 
 
 def most_frequent(token_list, n):
@@ -87,7 +88,36 @@ def sorted_bigram(scored):
     return sorted(bg for bg, score in scored)
 
 
-tl = preprocessing('amazon_d.csv')
+def pos_tagger(rev_text):
+    return pos_tag(rev_text)
+
+
+def find_words(tagged_list, POS):
+    words = []
+    if POS == 'noun':
+        words = [i[0] for i in tagged_list if i[1] == 'NNP' or i[1] == 'NN' or i[1] == 'NNS']
+    elif POS == 'verb':
+        words = [i[0] for i in tagged_list if i[1] == 'VB' or i[1] == 'VBN' or i[1] == 'VBD'
+                 or i[1] == 'VBG' or i[1] == 'VBP' or i[1] == 'VBZ']
+    elif POS == 'adjective':
+        words = [i[0] for i in tagged_list if i[1] == 'JJ' or i[1] == 'JJR' or i[1] == 'JJS']
+    elif POS == 'adverb':
+        words = [i[0] for i in tagged_list if i[1] == 'RB' or i[1] == 'RBR' or i[1] == 'RBS'
+                 or i[1] == 'WRB']
+    elif POS == 'pronoun':
+        words = [i[0] for i in tagged_list if i[1] == 'PRP' or i[1] == 'PRP$' or i[1] == 'WP'
+                 or i[1] == 'WPS']
+    elif POS == 'other':
+        words = [i[0] for i in tagged_list if i[1] == 'CC' or i[1] == 'CD' or i[1] == 'DT'
+                 or i[1] == 'EX' or i[1] == 'IN' or i[1] == 'LS' or i[1] == 'MD'
+                 or i[1] == 'PDT' or i[1] == 'POS' or i[1] == 'RP' or i[1] == 'TO'
+                 or i[1] == 'UH' or i[1] == 'WDT']
+    else:
+        print('Wrong tag name!')
+
+    return most_frequent(words, 10)
+
+tl, raw_text = preprocessing('amazon_d.csv')
 most_freq = most_frequent(tl, 10)
 bglist = list_freq_bigram(tl, 2, 5)
 
@@ -98,3 +128,21 @@ print("Scored bigrams: ", scored)
 print("---------------------------")
 sorted_bgs = sorted_bigram(scored)
 print("Sorted scored bigrams: ", sorted_bgs)
+POS = pos_tagger(raw_text)
+print("---------------------------")
+print("POS tags: ", POS)
+POS_tags = [i[1] for i in POS]
+print("---------------------------")
+print("Only tags: ", POS_tags)
+most_freq_POS = most_frequent(POS_tags, 10)
+print("---------------------------")
+print("10 most common POS tags: ", most_freq_POS)
+tag_name = 'noun'
+most_freq_POS_words = find_words(POS, tag_name)
+print("---------------------------")
+print("10 most common ", tag_name, "s: ", most_freq_POS_words)
+
+
+
+
+

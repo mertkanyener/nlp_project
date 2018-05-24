@@ -82,14 +82,13 @@ def make_pipelines():
     pipe_nb = make_pipeline(
                             MultinomialNB())
 
-    pipe_lr = make_pipeline(
+    pipe_lr = make_pipeline(TruncatedSVD(n_components=2),
                             LogisticRegression(random_state=1))
 
     pipe_svm = make_pipeline(
                             SVC(random_state=1))
 
     pipe_forest = make_pipeline(
-                                #TruncatedSVD(n_components=2),
                                 RandomForestClassifier(n_estimators=100, random_state=1))
 
     pipe_knn = make_pipeline(
@@ -101,8 +100,26 @@ def make_pipelines():
     return pipelines
 
 
-X, y = read_data('reviews_Video_Games.json.gz')
+auto = 'reviews_Automotive.json.gz'
+phones = 'reviews_Cell_Phones_and_Accessories.json.gz'
+games = 'reviews_Video_Games.json.gz'
+
+X, y = read_data(auto)
 X_bow = text_representation(X)
+
+pipe_nb = make_pipeline(MultinomialNB())
+
+pipe_lr = make_pipeline(
+                        TruncatedSVD(n_components=5000),
+                        LogisticRegression(random_state=1))
+X_train, X_test, y_train, y_test = train_test_split(X_bow, y, test_size=0.2, random_state=1, stratify=y)
+print(X_train.shape)
+pipe_nb.fit(X_train, y_train)
+y_pred = pipe_nb.predict(X_test)
+print('Accuracy: %.3f' % accuracy_score(y_test, y_pred))
+
+
+"""
 pipelines = make_pipelines()
 run_classifiers(X_bow, y, 4, pipelines)
-
+"""

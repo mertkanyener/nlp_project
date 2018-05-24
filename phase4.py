@@ -1,11 +1,8 @@
 import pandas as pd
-import numpy as np
 import gzip
 
-
-from nltk.corpus import stopwords
 from nltk import *
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer, TfidfTransformer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier
@@ -14,8 +11,7 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA, TruncatedSVD, KernelPCA
+from sklearn.decomposition import TruncatedSVD
 
 
 def parse(path):
@@ -35,7 +31,7 @@ def getDF(path):
 
 def read_data(filename):
     df = getDF(filename)
-    X = df.loc[:10000, 'reviewText'].values
+    X = df.loc[:10000, 'reviewText'].values # take only first 10000 reviews
     y = df.loc[:10000, 'overall'].values
 
     return X, y
@@ -82,10 +78,10 @@ def make_pipelines():
     pipe_nb = make_pipeline(
                             MultinomialNB())
 
-    pipe_lr = make_pipeline(TruncatedSVD(n_components=2),
+    pipe_lr = make_pipeline(TruncatedSVD(n_components=5000),
                             LogisticRegression(random_state=1))
 
-    pipe_svm = make_pipeline(
+    pipe_svm = make_pipeline(TruncatedSVD(n_components=5000),
                             SVC(random_state=1))
 
     pipe_forest = make_pipeline(
@@ -100,26 +96,16 @@ def make_pipelines():
     return pipelines
 
 
+
+# Three different products and user reviews and ratings on them
 auto = 'reviews_Automotive.json.gz'
 phones = 'reviews_Cell_Phones_and_Accessories.json.gz'
 games = 'reviews_Video_Games.json.gz'
 
-X, y = read_data(auto)
+
+
+X, y = read_data(games)
 X_bow = text_representation(X)
-
-pipe_nb = make_pipeline(MultinomialNB())
-
-pipe_lr = make_pipeline(
-                        TruncatedSVD(n_components=5000),
-                        LogisticRegression(random_state=1))
-X_train, X_test, y_train, y_test = train_test_split(X_bow, y, test_size=0.2, random_state=1, stratify=y)
-print(X_train.shape)
-pipe_nb.fit(X_train, y_train)
-y_pred = pipe_nb.predict(X_test)
-print('Accuracy: %.3f' % accuracy_score(y_test, y_pred))
-
-
-"""
 pipelines = make_pipelines()
 run_classifiers(X_bow, y, 4, pipelines)
-"""
+
